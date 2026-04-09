@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Failure Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 100px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .message {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .error {
+            font-size: 24px;
+            color: #ff6b6b;
+            background: white;
+            display: inline-block;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        .details {
+            margin-top: 30px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="message">❌ TEST FAILED! ❌</div>
+    <div class="error">Expected result did not match actual result</div>
+    <div class="details">
+        <p>Test ID: 7</p>
+        <p>Test Name: Deliberate Fail Test</p>
+        <p>Expected: "ThisWillNeverMatch"</p>
+        <p>Actual: "Google"</p>
+        <p>Time: <span id="time"></span></p>
+    </div>
+    
+    <script>
+        document.getElementById('time').innerHTML = new Date().toLocaleString();
+    </script>
+</body>
+</html>

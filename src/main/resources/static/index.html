@@ -1,0 +1,451 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Automated Regression Test Suite Framework</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#e0f2fe 0%,#f0fdf4 100%);min-height:100vh;color:#1e293b}
+#topbar{background:#0f172a;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+#topbar h1{font-size:1.1rem;font-weight:600;letter-spacing:.5px}
+#clock{font-size:.9rem;font-variant-numeric:tabular-nums;color:#94a3b8}
+#tabs{display:flex;gap:4px;padding:16px 24px 0;flex-wrap:wrap}
+.tab{padding:8px 16px;border-radius:8px 8px 0 0;cursor:pointer;font-size:.85rem;font-weight:500;background:#cbd5e1;color:#475569;border:none;transition:all .2s}
+.tab.active{background:#fff;color:#0ea5e9;box-shadow:0 -2px 0 #0ea5e9 inset}
+.tab:hover:not(.active){background:#e2e8f0}
+.panel{display:none;padding:0 24px 24px}
+.panel.active{display:block}
+.card{background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:20px;margin-bottom:20px}
+.card.blue{border-top:4px solid #0ea5e9}
+.card.green{border-top:4px solid #22c55e}
+.card.red{border-top:4px solid #ef4444}
+.card.purple{border-top:4px solid #a855f7}
+.card.orange{border-top:4px solid #f97316}
+.card h2{font-size:1rem;font-weight:600;color:#475569;margin-bottom:16px}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:20px}
+.stat-box{background:#fff;border-radius:12px;padding:20px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.stat-box .label{font-size:.75rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.stat-box .value{font-size:2rem;font-weight:700;color:#0f172a}
+.stat-box.blue .value{color:#0ea5e9}
+.stat-box.green .value{color:#22c55e}
+.stat-box.red .value{color:#ef4444}
+.stat-box.purple .value{color:#a855f7}
+.stat-box.orange .value{color:#f97316}
+.progress-wrap{margin:8px 0 4px}
+.progress-bar{height:12px;background:#e2e8f0;border-radius:99px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#22c55e,#16a34a);border-radius:99px;transition:width .8s ease}
+.progress-label{font-size:.8rem;color:#64748b;margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{background:#f1f5f9;color:#475569;font-weight:600;padding:10px 12px;text-align:left;border-bottom:2px solid #e2e8f0}
+td{padding:9px 12px;border-bottom:1px solid #f1f5f9}
+tr.pass td{background:#f0fdf4}
+tr.fail td{background:#fef2f2}
+tr.pass td:first-child{border-left:3px solid #22c55e}
+tr.fail td:first-child{border-left:3px solid #ef4444}
+.badge{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.75rem;font-weight:600}
+.badge.pass{background:#dcfce7;color:#16a34a}
+.badge.fail{background:#fee2e2;color:#dc2626}
+.badge.pending{background:#fef9c3;color:#ca8a04}
+.badge.running{background:#dbeafe;color:#2563eb}
+.btn{padding:8px 18px;border-radius:8px;border:none;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s}
+.btn-primary{background:#0ea5e9;color:#fff}
+.btn-primary:hover{background:#0284c7}
+.btn-success{background:#22c55e;color:#fff}
+.btn-success:hover{background:#16a34a}
+.btn-danger{background:#ef4444;color:#fff}
+.btn-danger:hover{background:#dc2626}
+.btn-outline{background:#fff;color:#475569;border:1px solid #cbd5e1}
+.btn-outline:hover{background:#f1f5f9}
+.btn-orange{background:#f97316;color:#fff}
+.btn-orange:hover{background:#ea580c}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.toolbar .spacer{flex:1}
+pre{background:#0f172a;color:#a5f3fc;padding:16px;border-radius:8px;overflow:auto;font-size:.8rem;max-height:500px}
+.trend-table td,.trend-table th{font-size:.8rem}
+.flaky-rate{font-weight:700}
+.flaky-rate.high{color:#ef4444}
+.flaky-rate.med{color:#f97316}
+.flaky-rate.low{color:#22c55e}
+#schedStatus{padding:12px 16px;border-radius:8px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;font-size:.85rem;margin-bottom:16px}
+#schedStatus.off{background:#fef2f2;border-color:#fecaca;color:#991b1b}
+.sched-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px}
+.sched-item{background:#f8fafc;border-radius:8px;padding:14px;border:1px solid #e2e8f0}
+.sched-item .si-label{font-size:.75rem;color:#94a3b8;text-transform:uppercase;margin-bottom:4px}
+.sched-item .si-val{font-size:.95rem;font-weight:600;color:#0f172a}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <h1>&#9654; Automated Regression Test Suite Framework</h1>
+  <span id="clock"></span>
+</div>
+
+<div id="tabs">
+  <button class="tab active" onclick="sw(0)">Overview <small>M1</small></button>
+  <button class="tab" onclick="sw(1)">Test Suites <small>M2</small></button>
+  <button class="tab" onclick="sw(2)">HTML Report <small>M3</small></button>
+  <button class="tab" onclick="sw(3)">Dashboard <small>M3</small></button>
+  <button class="tab" onclick="sw(4)">Analytics <small>M4</small></button>
+  <button class="tab" onclick="sw(5)">Stats JSON <small>M4</small></button>
+  <button class="tab" onclick="sw(6)">JUnit XML <small>M4</small></button>
+  <button class="tab" onclick="sw(7)">Scheduling <small>M4</small></button>
+</div>
+
+<!-- PANEL 0: Overview -->
+<div class="panel active" id="p0">
+  <br/>
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-box blue"><div class="label">Total Tests</div><div class="value" id="sTotalTests">—</div></div>
+    <div class="stat-box green"><div class="label">Passed</div><div class="value" id="sPassed">—</div></div>
+    <div class="stat-box red"><div class="label">Failed</div><div class="value" id="sFailed">—</div></div>
+    <div class="stat-box purple"><div class="label">Test Cases</div><div class="value" id="sTotalCases">—</div></div>
+    <div class="stat-box orange"><div class="label">Avg Duration</div><div class="value" id="sAvgDur">—</div></div>
+  </div>
+  <div class="card green">
+    <h2>Pass Rate</h2>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="passBar" style="width:0%"></div></div>
+      <div class="progress-label" id="passLabel">Loading…</div>
+    </div>
+  </div>
+  <div class="card blue">
+    <h2>Recent Test Results</h2>
+    <div class="toolbar">
+      <button class="btn btn-success" onclick="runAll()">&#9654; Run All Tests</button>
+      <button class="btn btn-outline" id="autoRefBtn" onclick="toggleAuto()">&#8635; Auto-Refresh: OFF</button>
+      <span class="spacer"></span>
+      <button class="btn btn-outline" onclick="exportCSV()">&#8595; Export CSV</button>
+      <button class="btn btn-orange" onclick="exportJUnit()">&#8595; Export JUnit XML</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table id="resultsTable">
+        <thead><tr><th>#</th><th>Test Case</th><th>Type</th><th>Status</th><th>Execution Time</th><th>Duration (ms)</th></tr></thead>
+        <tbody id="resultsTbody"><tr><td colspan="6" style="text-align:center;color:#94a3b8">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL 1: Test Suites -->
+<div class="panel" id="p1">
+  <br/>
+  <div class="card blue">
+    <h2>Test Suites</h2>
+    <div style="overflow-x:auto">
+      <table id="suitesTable">
+        <thead><tr><th>ID</th><th>Name</th><th>Description</th><th>Status</th><th>Created At</th></tr></thead>
+        <tbody id="suitesTbody"><tr><td colspan="5" style="text-align:center;color:#94a3b8">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL 2: HTML Report -->
+<div class="panel" id="p2">
+  <br/>
+  <div class="card purple">
+    <h2>HTML Report (M3)</h2>
+    <p style="color:#64748b;font-size:.9rem;margin-bottom:16px">Live test results rendered as an HTML report.</p>
+    <div id="htmlReportContent" style="overflow-x:auto">
+      <table>
+        <thead><tr><th>#</th><th>Test Case</th><th>Type</th><th>Status</th><th>Execution Time</th><th>Duration (ms)</th></tr></thead>
+        <tbody id="htmlReportTbody"><tr><td colspan="6" style="text-align:center;color:#94a3b8">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL 3: Dashboard -->
+<div class="panel" id="p3">
+  <br/>
+  <div class="stats-grid">
+    <div class="stat-box blue"><div class="label">Total Tests</div><div class="value" id="dTotalTests">—</div></div>
+    <div class="stat-box green"><div class="label">Passed</div><div class="value" id="dPassed">—</div></div>
+    <div class="stat-box red"><div class="label">Failed</div><div class="value" id="dFailed">—</div></div>
+    <div class="stat-box orange"><div class="label">Pass Rate</div><div class="value" id="dPassRate">—</div></div>
+  </div>
+  <div class="card orange">
+    <h2>30-Day Trend</h2>
+    <div style="overflow-x:auto">
+      <table class="trend-table">
+        <thead><tr><th>Date</th><th>Total</th><th>Passed</th><th>Failed</th><th>Pass Rate</th></tr></thead>
+        <tbody id="trendTbody"><tr><td colspan="5" style="text-align:center;color:#94a3b8">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL 4: Analytics -->
+<div class="panel" id="p4">
+  <br/>
+  <div class="card red">
+    <h2>Flaky Tests</h2>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Test Name</th><th>Total Runs</th><th>Passed</th><th>Failed</th><th>Flakiness Rate</th></tr></thead>
+        <tbody id="flakyTbody"><tr><td colspan="5" style="text-align:center;color:#94a3b8">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card blue">
+    <h2>30-Day Trend (Analytics View)</h2>
+    <div style="overflow-x:auto">
+      <table class="trend-table">
+        <thead><tr><th>Date</th><th>Total</th><th>Passed</th><th>Failed</th><th>Pass Rate</th></tr></thead>
+        <tbody id="trendTbody2"><tr><td colspan="5" style="text-align:center;color:#94a3b8">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL 5: Stats JSON -->
+<div class="panel" id="p5">
+  <br/>
+  <div class="card blue">
+    <h2>Stats JSON — /api/analytics/stats</h2>
+    <div class="toolbar">
+      <button class="btn btn-primary" onclick="loadStats(true)">&#8635; Refresh</button>
+    </div>
+    <pre id="statsJson">Loading…</pre>
+  </div>
+</div>
+
+<!-- PANEL 6: JUnit XML -->
+<div class="panel" id="p6">
+  <br/>
+  <div class="card orange">
+    <h2>JUnit XML Report — /api/reports/junit</h2>
+    <div class="toolbar">
+      <button class="btn btn-primary" onclick="loadJUnit(true)">&#8635; Refresh</button>
+      <button class="btn btn-orange" onclick="exportJUnit()">&#8595; Download XML</button>
+    </div>
+    <pre id="junitXml">Loading…</pre>
+  </div>
+</div>
+
+<!-- PANEL 7: Scheduling -->
+<div class="panel" id="p7">
+  <br/>
+  <div id="schedStatus">Loading scheduling status…</div>
+  <div class="sched-grid" id="schedGrid"></div>
+  <div class="card blue">
+    <h2>Trigger Test Run</h2>
+    <p style="color:#64748b;font-size:.85rem;margin-bottom:12px">Manually trigger a parallel test run via POST /api/schedule/run</p>
+    <button class="btn btn-success" onclick="runAll()">&#9654; Run All Tests Now</button>
+    <div id="runMsg" style="margin-top:12px;font-size:.85rem;color:#16a34a"></div>
+  </div>
+</div>
+
+
+<script>
+// ── Clock ──────────────────────────────────────────────────────────────────
+(function tickClock(){
+  const el=document.getElementById('clock');
+  function tick(){el.textContent=new Date().toLocaleTimeString();}
+  tick(); setInterval(tick,1000);
+})();
+
+// ── Tab switching ──────────────────────────────────────────────────────────
+function sw(i){
+  document.querySelectorAll('.tab').forEach((t,idx)=>t.classList.toggle('active',idx===i));
+  document.querySelectorAll('.panel').forEach((p,idx)=>p.classList.toggle('active',idx===i));
+  if(i===0){loadStats();loadResults();}
+  else if(i===1){loadSuites();}
+  else if(i===2){loadHtmlReport();}
+  else if(i===3){loadStats();loadTrend('trendTbody');}
+  else if(i===4){loadFlaky();loadTrend('trendTbody2');}
+  else if(i===5){loadStats(true);}
+  else if(i===6){loadJUnit();}
+  else if(i===7){loadSchedule();}
+}
+
+// ── Auto-refresh ───────────────────────────────────────────────────────────
+let autoTimer=null;
+function toggleAuto(){
+  const btn=document.getElementById('autoRefBtn');
+  if(autoTimer){clearInterval(autoTimer);autoTimer=null;btn.textContent='⟳ Auto-Refresh: OFF';btn.classList.remove('btn-success');btn.classList.add('btn-outline');}
+  else{autoTimer=setInterval(()=>{loadStats();loadResults();},15000);btn.textContent='⟳ Auto-Refresh: ON';btn.classList.remove('btn-outline');btn.classList.add('btn-success');}
+}
+
+// ── Animated counter ───────────────────────────────────────────────────────
+function animateCount(el,target,suffix){
+  suffix=suffix||'';
+  const start=0,dur=600,step=16;
+  let cur=start,inc=Math.ceil(target/(dur/step));
+  const t=setInterval(()=>{cur=Math.min(cur+inc,target);el.textContent=cur+suffix;if(cur>=target)clearInterval(t);},step);
+}
+
+// ── Badge helper ───────────────────────────────────────────────────────────
+function badge(status){
+  const s=(status||'').toUpperCase();
+  const cls=s==='PASS'||s==='PASSED'?'pass':s==='FAIL'||s==='FAILED'?'fail':s==='RUNNING'?'running':'pending';
+  return '<span class="badge '+cls+'">'+s+'</span>';
+}
+
+// ── Load Stats ─────────────────────────────────────────────────────────────
+function loadStats(showJson){
+  fetch('/api/analytics/stats')
+    .then(r=>r.json())
+    .then(d=>{
+      // Overview counters
+      animateCount(document.getElementById('sTotalTests'),d.totalTests||0);
+      animateCount(document.getElementById('sPassed'),d.passed||0);
+      animateCount(document.getElementById('sFailed'),d.failed||0);
+      animateCount(document.getElementById('sTotalCases'),d.totalTestCases||0);
+      const avg=d.avgDurationMs?Math.round(d.avgDurationMs)+'ms':'0ms';
+      document.getElementById('sAvgDur').textContent=avg;
+      // Pass rate bar
+      const pr=parseFloat(d.passRate)||0;
+      document.getElementById('passBar').style.width=pr+'%';
+      document.getElementById('passLabel').textContent=pr.toFixed(1)+'% pass rate ('+d.passed+' / '+d.totalTests+' tests)';
+      // Dashboard panel
+      document.getElementById('dTotalTests').textContent=d.totalTests||0;
+      document.getElementById('dPassed').textContent=d.passed||0;
+      document.getElementById('dFailed').textContent=d.failed||0;
+      document.getElementById('dPassRate').textContent=(pr.toFixed(1))+'%';
+      // JSON panel
+      if(showJson) document.getElementById('statsJson').textContent=JSON.stringify(d,null,2);
+    })
+    .catch(e=>{if(showJson)document.getElementById('statsJson').textContent='Error: '+e;});
+}
+
+// ── Load Results ───────────────────────────────────────────────────────────
+let lastResults=[];
+function loadResults(){
+  fetch('/api/tests/results')
+    .then(r=>r.json())
+    .then(data=>{
+      lastResults=data;
+      renderResults(data,'resultsTbody');
+    })
+    .catch(()=>{document.getElementById('resultsTbody').innerHTML='<tr><td colspan="6" style="color:#ef4444;text-align:center">Failed to load results</td></tr>';});
+}
+
+function renderResults(data,tbodyId){
+  const tb=document.getElementById(tbodyId);
+  if(!data||!data.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:#94a3b8">No results found</td></tr>';return;}
+  tb.innerHTML=data.map((r,i)=>{
+    const s=(r.status||'').toUpperCase();
+    const rowCls=s==='PASS'||s==='PASSED'?'pass':s==='FAIL'||s==='FAILED'?'fail':'';
+    return '<tr class="'+rowCls+'"><td>'+(i+1)+'</td><td>'+(r.testCaseName||'—')+'</td><td>'+(r.testCaseType||'—')+'</td><td>'+badge(r.status)+'</td><td>'+(r.executionTime||'—')+'</td><td>'+(r.durationMs!=null?r.durationMs+'ms':'—')+'</td></tr>';
+  }).join('');
+}
+
+// ── Load Suites ────────────────────────────────────────────────────────────
+function loadSuites(){
+  fetch('/api/tests/suites')
+    .then(r=>r.json())
+    .then(data=>{
+      const tb=document.getElementById('suitesTbody');
+      if(!data||!data.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:#94a3b8">No suites found</td></tr>';return;}
+      tb.innerHTML=data.map(s=>'<tr><td>'+(s.id||'—')+'</td><td>'+(s.name||'—')+'</td><td>'+(s.description||'—')+'</td><td>'+badge(s.status)+'</td><td>'+(s.createdAt||'—')+'</td></tr>').join('');
+    })
+    .catch(()=>{document.getElementById('suitesTbody').innerHTML='<tr><td colspan="5" style="color:#ef4444;text-align:center">Failed to load suites</td></tr>';});
+}
+
+// ── Load HTML Report ───────────────────────────────────────────────────────
+function loadHtmlReport(){
+  fetch('/api/tests/results')
+    .then(r=>r.json())
+    .then(data=>renderResults(data,'htmlReportTbody'))
+    .catch(()=>{document.getElementById('htmlReportTbody').innerHTML='<tr><td colspan="6" style="color:#ef4444;text-align:center">Failed to load</td></tr>';});
+}
+
+// ── Load Trend ─────────────────────────────────────────────────────────────
+function loadTrend(tbodyId){
+  fetch('/api/analytics/trends?days=30')
+    .then(r=>r.json())
+    .then(d=>{
+      const tb=document.getElementById(tbodyId);
+      const rows=(d.trends||[]);
+      if(!rows.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:#94a3b8">No trend data</td></tr>';return;}
+      tb.innerHTML=rows.map(r=>'<tr><td>'+(r.date||'—')+'</td><td>'+(r.total||0)+'</td><td style="color:#16a34a;font-weight:600">'+(r.passed||0)+'</td><td style="color:#dc2626;font-weight:600">'+(r.failed||0)+'</td><td>'+(parseFloat(r.passRate||0).toFixed(1))+'%</td></tr>').join('');
+    })
+    .catch(()=>{document.getElementById(tbodyId).innerHTML='<tr><td colspan="5" style="color:#ef4444;text-align:center">Failed to load trends</td></tr>';});
+}
+
+// ── Load Flaky ─────────────────────────────────────────────────────────────
+function loadFlaky(){
+  fetch('/api/analytics/flaky')
+    .then(r=>r.json())
+    .then(data=>{
+      const tb=document.getElementById('flakyTbody');
+      if(!data||!data.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:#94a3b8">No flaky tests detected</td></tr>';return;}
+      tb.innerHTML=data.map(f=>{
+        const rate=parseFloat(f.flakinessRate||0);
+        const cls=rate>50?'high':rate>20?'med':'low';
+        return '<tr><td>'+(f.testName||'—')+'</td><td>'+(f.totalRuns||0)+'</td><td>'+(f.passed||0)+'</td><td>'+(f.failed||0)+'</td><td><span class="flaky-rate '+cls+'">'+rate.toFixed(1)+'%</span></td></tr>';
+      }).join('');
+    })
+    .catch(()=>{document.getElementById('flakyTbody').innerHTML='<tr><td colspan="5" style="color:#ef4444;text-align:center">Failed to load flaky data</td></tr>';});
+}
+
+// ── Load JUnit XML ─────────────────────────────────────────────────────────
+let lastXml='';
+function loadJUnit(force){
+  fetch('/api/reports/junit')
+    .then(r=>r.text())
+    .then(xml=>{lastXml=xml;document.getElementById('junitXml').textContent=xml;})
+    .catch(e=>{document.getElementById('junitXml').textContent='Error loading JUnit XML: '+e;});
+}
+
+// ── Load Schedule ──────────────────────────────────────────────────────────
+function loadSchedule(){
+  fetch('/api/schedule/status')
+    .then(r=>r.json())
+    .then(d=>{
+      const el=document.getElementById('schedStatus');
+      const on=d.scheduling===true||d.scheduling==='true'||d.scheduling==='enabled';
+      el.className=on?'':'off';
+      el.textContent=d.message||(on?'Scheduling is ENABLED':'Scheduling is DISABLED');
+      const grid=document.getElementById('schedGrid');
+      grid.innerHTML=[
+        {label:'Scheduling',val:d.scheduling!=null?String(d.scheduling):'—'},
+        {label:'Daily',val:d.daily!=null?String(d.daily):'—'},
+        {label:'Hourly',val:d.hourly!=null?String(d.hourly):'—'},
+        {label:'Weekly',val:d.weekly!=null?String(d.weekly):'—'}
+      ].map(item=>'<div class="sched-item"><div class="si-label">'+item.label+'</div><div class="si-val">'+item.val+'</div></div>').join('');
+    })
+    .catch(e=>{document.getElementById('schedStatus').textContent='Error: '+e;document.getElementById('schedStatus').className='off';});
+}
+
+// ── Run All Tests ──────────────────────────────────────────────────────────
+function runAll(){
+  const msg=document.getElementById('runMsg');
+  fetch('/api/schedule/run',{method:'POST'})
+    .then(r=>r.ok?r.text():Promise.reject(r.status))
+    .then(t=>{
+      if(msg)msg.textContent='✔ Test run triggered successfully. '+t;
+      setTimeout(()=>{loadStats();loadResults();},3000);
+    })
+    .catch(e=>{if(msg)msg.textContent='✖ Failed to trigger run: '+e;});
+}
+
+// ── Export CSV ─────────────────────────────────────────────────────────────
+function exportCSV(){
+  if(!lastResults.length){alert('No results loaded yet.');return;}
+  const header='#,Test Case,Type,Status,Execution Time,Duration (ms)\n';
+  const rows=lastResults.map((r,i)=>[i+1,'"'+(r.testCaseName||'')+'"',r.testCaseType||'',r.status||'',r.executionTime||'',r.durationMs!=null?r.durationMs:''].join(',')).join('\n');
+  const blob=new Blob([header+rows],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='test-results.csv';a.click();
+}
+
+// ── Export JUnit XML ───────────────────────────────────────────────────────
+function exportJUnit(){
+  if(!lastXml){
+    fetch('/api/reports/junit').then(r=>r.text()).then(xml=>{lastXml=xml;doDownloadXml();}).catch(()=>alert('Failed to fetch JUnit XML'));
+  } else {doDownloadXml();}
+}
+function doDownloadXml(){
+  const blob=new Blob([lastXml],{type:'application/xml'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='junit-report.xml';a.click();
+}
+
+// ── Initial load ───────────────────────────────────────────────────────────
+loadStats();
+loadResults();
+</script>
+</body>
+</html>
